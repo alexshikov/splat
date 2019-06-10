@@ -3,6 +3,6 @@
   "dependencies": {
   },
   "frameworks": {
-    "MonoAndroid,Version=v4.1": {}
+    "MonoAndroid,Version=v9.0": {}
   }
 }
