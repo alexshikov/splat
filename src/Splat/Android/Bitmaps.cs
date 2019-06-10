@@ -19,15 +19,17 @@ namespace Splat
 
         static PlatformBitmapLoader()
         {
-            // NB: This is some hacky shit, but on MonoAndroid at the moment, 
-            // this is always the entry assembly.
-            var assm = AppDomain.CurrentDomain.GetAssemblies()[1];
+			var assemblies = AppDomain.CurrentDomain.GetAssemblies ()
+							.Where (x => !x.IsDynamic)
+							.SelectMany (x => x.GetTypes ())
+							.Where (x => x.Name == "Resource" && x.GetNestedType ("Drawable") != null)
+							.Select (x => x.GetNestedType ("Drawable"))
+							.ToArray ();
 
-            var resources = assm.GetModules().SelectMany(x => x.GetTypes()).First(x => x.Name == "Resource");
-
-            drawableList = resources.GetNestedType("Drawable").GetFields()
-                .Where(x => x.FieldType == typeof(int))
-                .ToDictionary(k => k.Name, v => (int)v.GetRawConstantValue());
+			drawableList = assemblies
+				.SelectMany (x => x.GetFields ())
+				.Where (x => x.FieldType == typeof (int) && x.IsLiteral)
+				.ToDictionary (k => k.Name, v => (int)v.GetRawConstantValue ());
         }
 
         public async Task<IBitmap> Load(Stream sourceStream, float? desiredWidth, float? desiredHeight)
